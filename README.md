@@ -1,6 +1,6 @@
 # International Space Station Tracker Flask App
 
-## Overview
+### Overview
 
 This project involves tracking the International Space Station by fetching data from NASA's website and analyzing various parameters (range, closest epoch, average speed, instantaneous speed, location, etc.) in Python. This is also a Flask app, enabling data to be requested and sent over the internet. The data can be accessed from this link, however the program will access it automatically: https://nasa-public-data.s3.amazonaws.com/iss-coords/current/ISS_OEM/ISS.OEM_J2K_EPH.xml
 
@@ -33,8 +33,8 @@ You can interact with the flask app via `curl localhost:5000/<route>` once it is
 | /metadata | Returns metadata dictionary object |
 | /epochs | Returns formatted epochs data                                    |
 | /epochs?limit=int&offset=int | Formatted epochs data starting at `offset` with `limit` entries  |
-| /epochs/\<epoch\> | Returns state vector for a specific Epoch timestamp (format: 'YYYY-MM-DD__HH_MM_SS.SSSSSS')  |
-| /epochs/\<epoch\>/speed | Returns instantaneous speed for a specific Epoch timestamp (format: 'YYYY-MM-DD__HH_MM_SS.SSSSSS') |
+| /epochs/\<epoch\> | Returns state vector for a specific Epoch timestamp (format: `YYYY-MM-DD__HH_MM_SS.SSSSSS`)  |
+| /epochs/\<epoch\>/speed | Returns instantaneous speed for a specific Epoch timestamp (format: `YYYY-MM-DD__HH_MM_SS.SSSSSS`) |
 | /epochs/\<epoch\>/location | Returns latitude, longitude, altitude, and geolocation for a specific Epoch timestamp (format: 'YYYY-MM-DD__HH_MM_SS.SSSSSS') |
 | /now | Returns state vectors, location info, and instantaneous speed for the nearest Epoch |
 
