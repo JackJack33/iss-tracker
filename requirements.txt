@@ -2,5 +2,6 @@ astropy==6.0.0
 Flask==3.0.2
 geopy==2.4.1
 pytest==8.0.1
+pytz==2024.1
 requests==2.31.0
 xmltodict==0.13.0
