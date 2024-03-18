@@ -19,9 +19,10 @@ This is the pytest file for `iss_tracker.py`.
 #### Containerized
 1. Make sure Docker is intalled on your computer
 2. Download or clone this repository into a directory.
-5. In the directory, run `docker-compose up` And wait for the Docker image to generate and for the Flask app to start.
-7. To check things are up and running, in a separate terminal window run `docker ps -a`
-8. See Flask Interaction below
+3. In the directory, run `docker-compose up` And wait for the Docker image to generate and for the Flask app to start.
+4. To check things are up and running, in a separate terminal window run `docker ps -a`
+5. See Flask Interaction below
+6. To run unit tests, navigate to the `test` directory and run `pytest`. This involves testing some of the Flask app functions, so the container MUST be up and running for this to work.
 
 ### Flask Interaction
 You can interact with the flask app via `curl localhost:5000/<route>` once it is up and running.
@@ -35,7 +36,7 @@ You can interact with the flask app via `curl localhost:5000/<route>` once it is
 | /epochs?limit=int&offset=int | Formatted epochs data starting at `offset` with `limit` entries  |
 | /epochs/\<epoch\> | Returns state vector for a specific Epoch timestamp (format: `YYYY-MM-DD__HH_MM_SS.SSSSSS`)  |
 | /epochs/\<epoch\>/speed | Returns instantaneous speed for a specific Epoch timestamp (format: `YYYY-MM-DD__HH_MM_SS.SSSSSS`) |
-| /epochs/\<epoch\>/location | Returns latitude, longitude, altitude, and geolocation for a specific Epoch timestamp (format: 'YYYY-MM-DD__HH_MM_SS.SSSSSS') |
+| /epochs/\<epoch\>/location | Returns latitude, longitude, altitude, and geolocation for a specific Epoch timestamp (format: `YYYY-MM-DD__HH_MM_SS.SSSSSS`) |
 | /now | Returns state vectors, location info, and instantaneous speed for the nearest Epoch |
 
 
