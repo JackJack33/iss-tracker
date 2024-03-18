@@ -6,19 +6,19 @@ import math
 import logging
 import time
 import pytz
+import geopy
 
 from typing import Dict, List, Any, Tuple
 from datetime import datetime
 from astropy import coordinates, units
 from astropy.time import Time
 from astropy import constants as const
+from geopy.geocoders import Nominatim
 from flask import Flask, request
 
 app = Flask(__name__)
-
 url = "https://nasa-public-data.s3.amazonaws.com/iss-coords/current/ISS_OEM/ISS.OEM_J2K_EPH.xml"
-
-earth_radius = 6378.14
+geocoder = Nominatim(user_agent="iss_tracker")
 
 def fetch_data() -> Dict[str, Any]:
     """
@@ -205,7 +205,7 @@ def calculate_instantaneous_speed(closest_epoch: Dict[str, Any]) -> float:
     Calculates the instantaneous speed based on the closest epoch
 
     Args:
-        closest_epoch (Dict[str, Any]): The dictionary representing the closest epoch
+        closest_epoch (Dict[str, Any]): The dictionary of the closest epoch
 
     Returns:
         float: The instantaneous speed
@@ -218,24 +218,45 @@ def calculate_instantaneous_speed(closest_epoch: Dict[str, Any]) -> float:
         return
 
 def cartesian_to_geo(epoch: Dict[str, Any]) -> Dict[str,Any]:
+    """
+    Converts an epoch's cartesian coordinates to Latitude Longitude and Altitude
 
-    unix_timestamp = datetime.strptime(epoch['timestamp'], '%Y-%m-%d %H:%M:%S.%f').timestamp()
-    unix_timestamp = Time(unix_timestamp, format='unix', scale='utc')
+    Args:
+        closest_epoch (Dict[str, Any]): The dictionary of an epoch
 
-    cart = coordinates.CartesianRepresentation(*[epoch['x'], epoch['y'], epoch['z']], unit=units.km)
-    gcrs = coordinates.GCRS(cart, obstime=unix_timestamp)
-    itrs = gcrs.transform_to(coordinates.ITRS(obstime=unix_timestamp))
-    ears = coordinates.EarthLocation(*itrs.cartesian.xyz)
+    Returns:
+        Dict[str,Any]: Dictionary containing Latitude Longitude and Altitude in degrees & km
+    """
+    try:
+        unix_timestamp = datetime.strptime(epoch['timestamp'], '%Y-%m-%d %H:%M:%S.%f').timestamp()
+        unix_timestamp = Time(unix_timestamp, format='unix', scale='utc')
+    except (KeyError, TypeError):
+        logging.error("Error: Missing or incorrect timestamp key in epoch")
+        return
+
+    try:
+        cart = coordinates.CartesianRepresentation(*[epoch['x'], epoch['y'], epoch['z']], unit=units.km)
+        gcrs = coordinates.GCRS(cart, obstime=unix_timestamp)
+        itrs = gcrs.transform_to(coordinates.ITRS(obstime=unix_timestamp))
+        ears = coordinates.EarthLocation(*itrs.cartesian.xyz)
+    except (KeyError, TypeError):
+        logging.error("Error: Missing or incorrect positional keys in epoch")
+        return
+    except:
+        logging.error("Error: Something went wrong with coordinate transformations")
 
     lon = ears.lon.deg + 90 - 15 # ?????
     if lon > 180:
         lon -= 180*2
 
+    geoloc = geocoder.reverse((ears.lat.deg, lon), zoom=15, language='en')
+
     geo = []
     geo.append({
         'lat': ears.lat.deg,
         'lon': lon,
-        'alt': ears.height.value
+        'alt': ears.height.value,
+        'geoloc': geoloc.address if geoloc else "Over Ocean or Unknown"
     })
     return geo
 
@@ -337,6 +358,26 @@ def get_epoch_speed(epoch):
         if data['timestamp'] == epoch:
             speed = calculate_instantaneous_speed(data)
             return {'speed': speed}
+    return {'error': 'Epoch not found'}, 404
+
+@app.route('/epochs/<epoch>/location', methods=['GET'])
+def get_epoch_location(epoch):
+    """
+    Fetches data and returns a specific epoch's location
+
+    Args:
+    - epoch (str): The timestamp for the epoch in format 'YYYY-MM-DD__HH_MM_SS.SSSSSS'
+
+    Returns:
+    - dict: A dictionary containing the epoch's latitude, longitude, altitude, and geoposition
+    """
+    epoch = epoch.replace("__", " ").replace("_", ":")
+    data_dict = fetch_data()
+    formatted_data = format_data(data_dict)
+    for data in formatted_data:
+        if data['timestamp'] == epoch:
+            geo = cartesian_to_geo(data)
+            return geo
     return {'error': 'Epoch not found'}, 404
 
 @app.route('/now', methods=['GET'])
